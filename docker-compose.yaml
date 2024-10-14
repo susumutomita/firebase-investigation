@@ -1,0 +1,10 @@
+services:
+  firebase-investigation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - TZ=Asia/Tokyo
+    tty: true
