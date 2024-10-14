@@ -4,7 +4,11 @@ docker-build:
 
 .PHONY: docker-up
 docker-up:
-	docker compose up -d
+	docker compose up
+
+.PHONY: docker-down
+docker-down:
+	docker compose down -v
 
 .PHONY: docker-connect
 docker-connect:
