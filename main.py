@@ -16,13 +16,13 @@ firebase_admin.initialize_app(
 # データの参照
 ref = db.reference("/")
 data = ref.get()
-logger.info(f"データの参照: {data}")
+logger.info("データの参照: %s", data)
 
 # データの書き込み
 new_user_ref = ref.child("users").push(
     {"name": "John Doe", "email": "john@example.com"}
 )
-logger.info(f"データの書き込み: {new_user_ref.key}")
+logger.info("データの書き込み: %s", new_user_ref.key)
 
 # データの更新
 ref.child("users/user_id").update({"name": "Jane Doe"})
