@@ -20,9 +20,27 @@ cred = credentials.Certificate(cert_path)
 firebase_admin.initialize_app(cred)
 print("firebase_admin initialized")
 
-# Firestoreに対してデータの取得クエリ
+# Firestoreに対してデータの書き込み
 db = firestore.client()
-docs = db.collection(collection_name).get()
+doc_ref = db.collection(collection_name).document("new_document")
 
-for doc in docs:
-    print(f"{doc.id} => {doc.to_dict()}")
+# 書き込むデータ
+data = {
+    "name": "John Doe",
+    "age": 30,
+    "email": "johndoe@example.com"
+}
+
+# データをFirestoreに書き込む
+doc_ref.set(data)
+print("データが書き込まれました")
+
+# 書き込まれたデータを取得して確認
+written_data = doc_ref.get().to_dict()
+if written_data == data:
+    print("データが正しく書き込まれました")
+else:
+    print("データの書き込みに失敗しました")
+
+# 書き込まれたデータを表示
+print("書き込まれたデータ:", written_data)
