@@ -23,32 +23,38 @@ cred = credentials.Certificate(cert_path)
 firebase_admin.initialize_app(cred)
 print("firebase_admin initialized")
 
-# Firestoreに対してデータの書き込み
+# Firestoreクライアントの初期化
 db = firestore.client()
 doc_ref = db.collection(collection_name).document("new_document")
 
 
 @app.route("/data", methods=["GET"])
 def get_data():
-    # Firestoreからデータを取得
-    doc = doc_ref.get()
-    if doc.exists:
-        return jsonify(doc.to_dict()), 200
-    else:
-        return jsonify({"error": "データが見つかりません"}), 404
+    """Firestoreからデータを取得するエンドポイント"""
+    try:
+        doc = doc_ref.get()
+        if doc.exists:
+            return jsonify(doc.to_dict()), 200
+        else:
+            return jsonify({"error": "データが見つかりません"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/data", methods=["POST"])
 def post_data():
-    # リクエストからデータを取得
-    data = request.json
-    if not data:
-        return jsonify({"error": "データが提供されていません"}), 400
+    """Firestoreにデータを書き込むエンドポイント"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "データが提供されていません"}), 400
 
-    # データをFirestoreに書き込む
-    doc_ref.set(data)
-    return jsonify({"message": "データが書き込まれました"}), 201
+        doc_ref.set(data)
+        return jsonify({"message": "データが書き込まれました"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # すべての外部からのアクセスを許可し、指定ポートでサーバーを起動
+    app.run(host="0.0.0.0", port=8000, debug=True)
