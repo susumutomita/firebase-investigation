@@ -2,6 +2,9 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
 
 # .envファイルから環境変数をロード
 load_dotenv()
@@ -24,23 +27,28 @@ print("firebase_admin initialized")
 db = firestore.client()
 doc_ref = db.collection(collection_name).document("new_document")
 
-# 書き込むデータ
-data = {
-    "name": "John Doe",
-    "age": 30,
-    "email": "johndoe@example.com"
-}
 
-# データをFirestoreに書き込む
-doc_ref.set(data)
-print("データが書き込まれました")
+@app.route("/data", methods=["GET"])
+def get_data():
+    # Firestoreからデータを取得
+    doc = doc_ref.get()
+    if doc.exists:
+        return jsonify(doc.to_dict()), 200
+    else:
+        return jsonify({"error": "データが見つかりません"}), 404
 
-# 書き込まれたデータを取得して確認
-written_data = doc_ref.get().to_dict()
-if written_data == data:
-    print("データが正しく書き込まれました")
-else:
-    print("データの書き込みに失敗しました")
 
-# 書き込まれたデータを表示
-print("書き込まれたデータ:", written_data)
+@app.route("/data", methods=["POST"])
+def post_data():
+    # リクエストからデータを取得
+    data = request.json
+    if not data:
+        return jsonify({"error": "データが提供されていません"}), 400
+
+    # データをFirestoreに書き込む
+    doc_ref.set(data)
+    return jsonify({"message": "データが書き込まれました"}), 201
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
