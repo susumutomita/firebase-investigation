@@ -1,15 +1,15 @@
-.PHONY: docker-build
-docker-build:
+.PHONY: build
+build:
 	docker compose build
 
-.PHONY: docker-up
-docker-up:
+.PHONY: up
+up:
 	docker compose up
 
-.PHONY: docker-down
-docker-down:
+.PHONY: down
+down:
 	docker compose down -v
 
-.PHONY: docker-connect
-docker-connect:
+.PHONY: connect
+connect:
 	docker compose exec firebase-investigation /bin/bash

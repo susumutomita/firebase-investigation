@@ -1,33 +1,63 @@
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import db
-import logging
+from firebase_admin import firestore
 
-# ロガーの設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Use a service account.
+cred = credentials.Certificate("path/to/serviceAccount.json")
 
-# サービスアカウントキーのパスを指定
-cred = credentials.Certificate("path/to/serviceAccountKey.json")
-firebase_admin.initialize_app(
-    cred, {"databaseURL": "https://your-database-name.firebaseio.com/"}
-)
+app = firebase_admin.initialize_app(cred)
 
-# データの参照
-ref = db.reference("/")
-data = ref.get()
-logger.info("データの参照: %s", data)
+db = firestore.client()
+import datetime
 
-# データの書き込み
-new_user_ref = ref.child("users").push(
-    {"name": "John Doe", "email": "john@example.com"}
-)
-logger.info("データの書き込み: %s", new_user_ref.key)
+def save_availability_data(facility_id, availability_data):
+    """
+    施設の空き情報をFirestoreに保存する関数
+    :param facility_id: 施設のID
+    :param availability_data: 空き情報のデータ
+    """
+    # Firestoreのコレクションを指定
+    collection_ref = db.collection('facility_availability')
 
-# データの更新
-ref.child("users/user_id").update({"name": "Jane Doe"})
-logger.info("データの更新: users/user_id の名前を Jane Doe に更新")
+    # ドキュメントのIDを施設IDに基づいて設定
+    doc_ref = collection_ref.document(facility_id)
 
-# データの削除
-ref.child("users/user_id").delete()
-logger.info("データの削除: users/user_id を削除")
+    # 保存するデータにタイムスタンプを追加
+    availability_data['timestamp'] = datetime.datetime.now()
+
+    # Firestoreにデータを保存
+    doc_ref.set(availability_data)
+
+def get_availability_data(facility_id):
+    """
+    Firestoreから施設の空き情報を取得する関数
+    :param facility_id: 施設のID
+    :return: 空き情報のデータ
+    """
+    # Firestoreのコレクションを指定
+    collection_ref = db.collection('facility_availability')
+
+    # ドキュメントのIDを施設IDに基づいて取得
+    doc_ref = collection_ref.document(facility_id)
+
+    # Firestoreからデータを取得
+    doc = doc_ref.get()
+
+    if doc.exists:
+        return doc.to_dict()
+    else:
+        return None
+
+# テスト用のデータ
+facility_id = 'example_facility'
+availability_data = {
+    'available_slots': 5,
+    'last_checked': datetime.datetime.now()
+}
+
+# データを保存
+save_availability_data(facility_id, availability_data)
+
+# データを取得して表示
+retrieved_data = get_availability_data(facility_id)
+print(retrieved_data)
