@@ -7,4 +7,8 @@ services:
       - .:/app
     environment:
       - TZ=Asia/Tokyo
+      - FIREBASE_CERTIFICATE_PATH=${FIREBASE_CERTIFICATE_PATH}
+      - FIREBASE_COLLECTION_NAME=${FIREBASE_COLLECTION_NAME}
+    ports:
+      - "8000:8000"
     tty: true
