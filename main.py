@@ -286,6 +286,45 @@ def index():
     return jsonify({"message": "Swagger UIへアクセスするには /apidocs/ を使用してください."}), 200
 
 
+@app.route("/data/write", methods=["POST"])
+def write_data():
+    """Firestoreにデータを書き込むエンドポイント
+    ---
+    tags:
+      - Data
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            field1:
+              type: string
+            field2:
+              type: string
+    responses:
+      200:
+        description: データが正常に書き込まれた
+      400:
+        description: 無効なリクエスト
+      500:
+        description: サーバーエラー
+    """
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "無効なリクエスト"}), 400
+
+        doc_ref = collection_ref.add(data)
+        return jsonify({
+            "message": "データが正常に書き込まれました",
+            "id": doc_ref[1].id
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     # すべての外部からのアクセスを許可し、指定ポートでサーバーを起動
     app.run(host="0.0.0.0", port=8000, debug=True)
