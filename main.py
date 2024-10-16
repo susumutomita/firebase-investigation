@@ -25,32 +25,65 @@ print("firebase_admin initialized")
 
 # Firestoreクライアントの初期化
 db = firestore.client()
-doc_ref = db.collection(collection_name).document("new_document")
+collection_ref = db.collection(collection_name)
 
 
 @app.route("/data", methods=["GET"])
-def get_data():
-    """Firestoreからデータを取得するエンドポイント"""
+def get_all_data():
+    """Firestoreから全てのデータを取得するエンドポイント"""
     try:
-        doc = doc_ref.get()
+        docs = collection_ref.stream()
+        data = {doc.id: doc.to_dict() for doc in docs}
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/data/<doc_id>", methods=["GET"])
+def get_data(doc_id):
+    """Firestoreから特定のドキュメントを取得するエンドポイント"""
+    try:
+        doc = collection_ref.document(doc_id).get()
         if doc.exists:
             return jsonify(doc.to_dict()), 200
         else:
-            return jsonify({"error": "データが見つかりません"}), 404
+            return jsonify({"error": f"ドキュメント '{doc_id}' が見つかりません"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/data", methods=["POST"])
-def post_data():
-    """Firestoreにデータを書き込むエンドポイント"""
+def create_or_update_data():
+    """Firestoreにデータを追加または更新するエンドポイント（アップサート）"""
     try:
         data = request.json
         if not data:
             return jsonify({"error": "データが提供されていません"}), 400
 
-        doc_ref.set(data)
-        return jsonify({"message": "データが書き込まれました"}), 201
+        doc_id = data.get("id")
+
+        if doc_id:
+            # 指定されたIDでドキュメントをセット（アップサート）
+            collection_ref.document(doc_id).set(data, merge=True)
+            return jsonify({"message": f"ドキュメント '{doc_id}' が追加/更新されました"}), 201
+        else:
+            # ドキュメントIDを自動生成して追加
+            doc_ref = collection_ref.add(data)
+            return jsonify({"message": "新しいドキュメントが追加されました", "id": doc_ref[1].id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/data/<doc_id>", methods=["DELETE"])
+def delete_data(doc_id):
+    """Firestoreから特定のドキュメントを削除するエンドポイント"""
+    try:
+        doc = collection_ref.document(doc_id).get()
+        if doc.exists:
+            collection_ref.document(doc_id).delete()
+            return jsonify({"message": f"ドキュメント '{doc_id}' が削除されました"}), 200
+        else:
+            return jsonify({"error": f"ドキュメント '{doc_id}' が見つかりません"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
